@@ -1,5 +1,5 @@
 /* Service worker: offline shell + cache mapových dlaždic (LRU-ish) */
-const SHELL = "slapy-shell-v1";
+const SHELL = "slapy-shell-v2";
 const TILES = "slapy-tiles-v1";
 const SHELL_FILES = [
   "./", "index.html", "css/app.css",

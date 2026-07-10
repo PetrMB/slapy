@@ -78,13 +78,17 @@
   };
   const poiLayer = L.layerGroup().addTo(map);
   const poiMarkers = [];
+  const POI_LABEL_ZOOM = 13; // pod tímto přiblížením jen špendlík bez textu
+  const poiIcon = (p, withLabel) => L.divIcon({
+    className: withLabel ? "poi-label" : "poi-pin",
+    html: withLabel
+      ? `<div>${POI_ICONS[p.type] || "📍"} ${p.name}</div>`
+      : `<div>${POI_ICONS[p.type] || "📍"}</div>`,
+    iconSize: [0, 0],
+  });
   POIS.forEach(p => {
     const m = L.marker([p.lat, p.lon], {
-      icon: L.divIcon({
-        className: "poi-label",
-        html: `<div>${POI_ICONS[p.type] || "📍"} ${p.name}</div>`,
-        iconSize: [0, 0],
-      }),
+      icon: poiIcon(p, map.getZoom() >= POI_LABEL_ZOOM),
     });
     const linkHtml = p.web ? `<br><a href="${p.web}" target="_blank" rel="noopener">web</a>` : "";
     const telHtml = p.tel ? ` · <a href="tel:${p.tel.replace(/ /g, "")}">${p.tel}</a>` : "";
@@ -95,6 +99,14 @@
     );
     m.addTo(poiLayer);
     poiMarkers.push({ p, m });
+  });
+  /* popisky míst jen po přiblížení, jinak jen špendlík (proti překryvu) */
+  let poiLabelsShown = map.getZoom() >= POI_LABEL_ZOOM;
+  map.on("zoomend", () => {
+    const show = map.getZoom() >= POI_LABEL_ZOOM;
+    if (show === poiLabelsShown) return;
+    poiLabelsShown = show;
+    poiMarkers.forEach(({ p, m }) => m.setIcon(poiIcon(p, show)));
   });
   map.on("popupopen", e => {
     const btn = e.popup.getElement().querySelector("[data-nav]");
