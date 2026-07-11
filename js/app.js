@@ -353,25 +353,39 @@
   });
 
   /* ---------- taby a panel ---------- */
-  const panel = $("panel"), panelContent = $("panel-content");
+  const panel = $("panel"), panelContent = $("panel-content"), scrim = $("scrim");
   const tabs = document.querySelectorAll("#tabbar button");
   let activeTab = "map";
+  function closePanel() {
+    panel.hidden = true;
+    scrim.classList.remove("show");
+    setTimeout(() => { if (!scrim.classList.contains("show")) scrim.hidden = true; }, 300);
+    tabs.forEach(x => x.classList.toggle("active", x.dataset.tab === "map"));
+    activeTab = "map";
+  }
   tabs.forEach(b => b.addEventListener("click", () => {
+    if (b.dataset.tab === activeTab && b.dataset.tab !== "map") { closePanel(); return; }
     tabs.forEach(x => x.classList.remove("active"));
     b.classList.add("active");
     activeTab = b.dataset.tab;
     if (activeTab === "map") {
-      panel.hidden = true;
+      closePanel();
     } else {
+      scrim.hidden = false;
+      requestAnimationFrame(() => scrim.classList.add("show"));
       panel.hidden = false;
       Panels.render(activeTab, panelContent, { map, setTarget, showAlert });
     }
   }));
-  $("panel-handle").addEventListener("click", () => {
-    panel.hidden = true;
-    tabs.forEach(x => x.classList.toggle("active", x.dataset.tab === "map"));
-    activeTab = "map";
-  });
+  $("panel-handle").addEventListener("click", closePanel);
+  scrim.addEventListener("click", closePanel);
+
+  /* posun handle dolů = zavřít bottom sheet */
+  let dragY0 = null;
+  $("panel-handle").addEventListener("touchstart", e => { dragY0 = e.touches[0].clientY; }, { passive: true });
+  $("panel-handle").addEventListener("touchmove", e => {
+    if (dragY0 != null && e.touches[0].clientY - dragY0 > 60) { closePanel(); dragY0 = null; }
+  }, { passive: true });
 
   /* ---------- hladina + počasí do stavového pruhu ---------- */
   Panels.loadLevel(levelVal);
