@@ -32,8 +32,13 @@ from skimage import measure
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 IMG_SERVER = "https://ags.cuzk.gov.cz/arcgis2/rest/services/dmr5g/ImageServer/exportImage"
-BBOX = (14.17, 49.60, 14.50, 49.86)   # lon_min, lat_min, lon_max, lat_max
-TILE_ZOOMS = range(10, 15)
+BBOX = (14.17, 49.60, 14.50, 49.86)   # lon_min, lat_min, lon_max, lat_max (Slapy)
+# dlaždice: Slapy detailně, koridor po Mělník jen z10–12 (3D pohled po proudu)
+TILE_SPECS = [
+    (BBOX, range(10, 15)),
+    ((14.17, 49.86, 14.60, 50.36), range(10, 13)),
+]
+META_BOUNDS = (14.17, 49.60, 14.60, 50.36)
 WATER_LEVEL = 270.6                    # max. zásobní hladina [m n. m.]
 DAM_KM, DAM_DEPTH = 91.61, 58.0        # hloubka u hráze
 KAMYK_KM, KAMYK_DEPTH = 134.73, 5.0    # odhad hloubky pod Kamýkem
@@ -125,24 +130,27 @@ def encode_terrarium(arr):
 
 def bake_tiles():
     total = 0
-    for z in TILE_ZOOMS:
-        x0, y1 = lonlat_to_tile(BBOX[0], BBOX[1], z)
-        x1, y0 = lonlat_to_tile(BBOX[2], BBOX[3], z)
-        for x in range(x0, x1 + 1):
-            for y in range(y0, y1 + 1):
-                path = os.path.join(ROOT, "terrain", str(z), str(x), f"{y}.png")
-                if os.path.exists(path):
-                    continue
-                m = tile_bounds_merc(z, x, y)
-                arr = fill_nodata(fetch_dem(*m, 256, 256))
-                os.makedirs(os.path.dirname(path), exist_ok=True)
-                Image.fromarray(encode_terrarium(arr)).save(path, optimize=True)
-                total += 1
-                if total % 25 == 0:
-                    print(f"  tiles: {total} (z{z})", flush=True)
+    all_zooms = set()
+    for bbox, zooms in TILE_SPECS:
+        all_zooms.update(zooms)
+        for z in zooms:
+            x0, y1 = lonlat_to_tile(bbox[0], bbox[1], z)
+            x1, y0 = lonlat_to_tile(bbox[2], bbox[3], z)
+            for x in range(x0, x1 + 1):
+                for y in range(y0, y1 + 1):
+                    path = os.path.join(ROOT, "terrain", str(z), str(x), f"{y}.png")
+                    if os.path.exists(path):
+                        continue
+                    m = tile_bounds_merc(z, x, y)
+                    arr = fill_nodata(fetch_dem(*m, 256, 256))
+                    os.makedirs(os.path.dirname(path), exist_ok=True)
+                    Image.fromarray(encode_terrarium(arr)).save(path, optimize=True)
+                    total += 1
+                    if total % 25 == 0:
+                        print(f"  tiles: {total} (z{z})", flush=True)
     meta = {
-        "bounds": list(BBOX),
-        "minzoom": min(TILE_ZOOMS), "maxzoom": max(TILE_ZOOMS),
+        "bounds": list(META_BOUNDS),
+        "minzoom": min(all_zooms), "maxzoom": max(all_zooms),
         "encoding": "terrarium",
         "attribution": "výškopis © ČÚZK DMR 5G (CC BY 4.0)",
         "baked": time.strftime("%Y-%m-%d"),

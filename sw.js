@@ -1,10 +1,10 @@
 /* Service worker: offline shell + cache mapových dlaždic (LRU-ish) */
-const SHELL = "slapy-shell-v4";
+const SHELL = "slapy-shell-v5";
 const TILES = "slapy-tiles-v1";
 const SHELL_FILES = [
   "./", "index.html", "css/app.css",
   "js/app.js", "js/gps.js", "js/panels.js", "js/riverkm.js", "js/weather.js", "js/map3d.js", "js/depth.js",
-  "js/data/pois.js", "js/data/river.js", "js/data/zones.js", "js/data/rules.js", "js/data/isobaths.js",
+  "js/data/pois.js", "js/data/downstream.js", "js/data/river.js", "js/data/zones.js", "js/data/rules.js", "js/data/isobaths.js",
   "vendor/leaflet/leaflet.js", "vendor/leaflet/leaflet.css",
   "vendor/maplibre/maplibre-gl.js", "vendor/maplibre/maplibre-gl.css",
   "manifest.webmanifest", "icons/icon.svg",

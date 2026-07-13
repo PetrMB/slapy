@@ -9,10 +9,12 @@ const Panels = (() => {
     all: "Vše", marina: "⚓ Přístaviště", fuel: "⛽ Palivo", food: "🍽 Restaurace",
     camp: "🏕 Kempy", ferry: "⛴ Přívozy", rental: "🛥 Půjčovny",
     beach: "🏖 Pláže", sight: "🏰 Zajímavosti", rescue: "🚑 Záchrana", dam: "🧱 Hráze",
+    lock: "🚦 Plavební komory",
   };
   const POI_ICONS = {
     marina: "⚓", fuel: "⛽", food: "🍽", camp: "🏕", ferry: "⛴",
     rescue: "🚑", dam: "🧱", rental: "🛥", beach: "🏖", sight: "🏰", info: "ℹ️",
+    lock: "🚦",
   };
 
   function fmtDist(m) { return m >= 1000 ? (m / 1000).toFixed(1) + " km" : Math.round(m) + " m"; }
@@ -89,6 +91,18 @@ const Panels = (() => {
              </div>`}
       </div>
       <div class="card">
+        <h3>🚤 Moje loď — ponor</h3>
+        <p class="muted">Podle ponoru se barví úseky vodní cesty na mapě
+          (🟢 projede · 🟠 bez rezervy · 🔴 neprojede) a hlásí se varování na trase.</p>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:10px">
+          <input type="number" id="draft-input" class="num-input" inputmode="decimal"
+            min="0" max="3" step="0.1" placeholder="1,6"
+            value="${localStorage.getItem("slapy.draft") || ""}">
+          <span style="font-weight:700">m</span>
+          <span class="muted" style="font-size:12.5px">(prázdné = bez hodnocení)</span>
+        </div>
+      </div>
+      <div class="card">
         <h3>🆘 Nouze na vodě</h3>
         <div class="kv"><span>Tísňová linka</span><b><a href="tel:112">112</a> / <a href="tel:155">155</a></b></div>
         <div class="kv"><span>VZS Slapy (Stará Živohošť)</span><b><a href="tel:+420607962552">607 962 552</a></b></div>
@@ -107,6 +121,13 @@ const Panels = (() => {
         }
       });
     }
+
+    el.querySelector("#draft-input").addEventListener("change", e => {
+      const v = parseFloat(String(e.target.value).replace(",", "."));
+      if (v > 0 && v <= 3) localStorage.setItem("slapy.draft", String(v));
+      else localStorage.removeItem("slapy.draft");
+      window.dispatchEvent(new Event("slapy:draftchange"));
+    });
 
     el.querySelector("#trip-rec").addEventListener("click", () => {
       if (s.trackOn) GPS.stopTrack();

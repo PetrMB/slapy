@@ -412,6 +412,20 @@ button { font-family: inherit; cursor: pointer; }
 .badge.no { background: var(--danger-soft); color: var(--danger); }
 .badge.warn { background: var(--amber-soft); color: var(--amber); }
 
+.num-input {
+  width: 90px;
+  padding: 11px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line-strong);
+  background: var(--ink-800);
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.num-input:focus { outline: none; border-color: var(--accent); }
+
 .bigbtn {
   display: block; width: 100%;
   padding: 14px; margin: 9px 0;

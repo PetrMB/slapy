@@ -40,8 +40,22 @@ const Map3D = (() => {
 
   /* převod existujících dat na GeoJSON */
   function axisGeoJSON() {
-    return { type: "Feature", geometry: { type: "LineString",
-      coordinates: RIVER_AXIS.map(p => [p[1], p[0]]) } };
+    const lines = [RIVER_AXIS.map(p => [p[1], p[0]])];
+    if (typeof DOWNSTREAM_AXIS !== "undefined") {
+      lines.push(DOWNSTREAM_AXIS.map(p => [p[1], p[0]]));
+    }
+    return { type: "Feature", geometry: { type: "MultiLineString", coordinates: lines } };
+  }
+  function sectionsGeoJSON() {
+    if (typeof SECTIONS === "undefined") return null;
+    const draft = parseFloat(localStorage.getItem("slapy.draft")) || 0;
+    const color = a => !draft ? "#2fb4ff" : a >= draft + 0.2 ? "#38dc94" : a >= draft ? "#ffb63d" : "#ff5a6a";
+    return { type: "FeatureCollection", features: SECTIONS.map(s => ({
+      type: "Feature",
+      properties: { color: color(s.draft), name: s.name, draft: s.draft },
+      geometry: { type: "LineString",
+        coordinates: RiverKM.slice(s.fromKm, s.toKm).map(p => [p[1], p[0]]) },
+    })) };
   }
   function zonesGeoJSON() {
     return { type: "FeatureCollection", features: ZONES.filter(z => z.poly).map(z => ({
@@ -82,7 +96,7 @@ const Map3D = (() => {
       zoom: Math.min(view.zoom, 16),
       pitch: 62,
       bearing: view.bearing || 0,
-      maxBounds: [[13.85, 49.45], [14.80, 50.00]],
+      maxBounds: [[13.85, 49.40], [14.80, 50.45]],
       maxPitch: 75,
       attributionControl: { compact: true },
       style: {
@@ -94,6 +108,8 @@ const Map3D = (() => {
           dem: demSource,
           axis: { type: "geojson", data: axisGeoJSON() },
           zones: { type: "geojson", data: zonesGeoJSON() },
+          sections: { type: "geojson",
+            data: sectionsGeoJSON() || { type: "FeatureCollection", features: [] } },
         },
         layers: [
           { id: "bg", type: "background", paint: { "background-color": "#0a1a28" } },
@@ -112,6 +128,9 @@ const Map3D = (() => {
           { id: "axis", type: "line", source: "axis",
             paint: { "line-color": "#24c6dc", "line-width": 1.4,
                      "line-opacity": 0.55, "line-dasharray": [4, 5] } },
+          { id: "sections", type: "line", source: "sections",
+            paint: { "line-color": ["get", "color"], "line-width": 4,
+                     "line-opacity": 0.6 } },
         ],
         sky: {
           "sky-color": "#0e2a44",
@@ -158,6 +177,12 @@ const Map3D = (() => {
           .setHTML(`<b>${p.name}</b><br><span class="muted">${p.desc || ""}${p.km ? ` · ř. km ${p.km}` : ""}</span>`))
         .addTo(map);
       poiMarkers.push(mk);
+    });
+
+    /* přebarvení úseků při změně ponoru */
+    window.addEventListener("slapy:draftchange", () => {
+      const src = map.getSource("sections");
+      if (src) src.setData(sectionsGeoJSON() || { type: "FeatureCollection", features: [] });
     });
 
     ready = true;

@@ -8,7 +8,7 @@
     zoom: 13,
     zoomControl: false,
     attributionControl: true,
-    maxBounds: [[49.50, 13.95], [49.95, 14.70]],
+    maxBounds: [[49.45, 13.90], [50.40, 14.75]],
     maxBoundsViscosity: 0.6,
   });
   L.control.scale({ imperial: false, position: "bottomleft" }).addTo(map);
@@ -40,15 +40,56 @@
 
   /* ---------- osa řeky + km značky ---------- */
   L.polyline(RIVER_AXIS, { color: "#2fb4ff", weight: 1.5, opacity: 0.5, dashArray: "6 8", interactive: false }).addTo(map);
-  const kmLayer = L.layerGroup().addTo(map);
-  const KM_MIN = RIVER_KM_CAL[0].km, KM_MAX = RIVER_KM_CAL[RIVER_KM_CAL.length - 1].km;
-  for (let km = Math.ceil(KM_MIN); km <= Math.floor(KM_MAX); km++) {
-    const pt = RiverKM.kmToPoint(km);
-    L.marker(pt, {
-      interactive: false,
-      icon: L.divIcon({ className: "km-label", html: `<div>${km}</div>`, iconSize: [30, 14], iconAnchor: [15, 7] }),
-    }).addTo(kmLayer);
+  if (typeof DOWNSTREAM_AXIS !== "undefined") {
+    L.polyline(DOWNSTREAM_AXIS, { color: "#2fb4ff", weight: 1.5, opacity: 0.5, dashArray: "6 8", interactive: false }).addTo(map);
   }
+  const kmLayer = L.layerGroup().addTo(map);
+  RiverKM.ranges().forEach(r => {
+    for (let km = Math.ceil(r.min); km <= Math.floor(r.max); km++) {
+      const pt = RiverKM.kmToPoint(km);
+      L.marker(pt, {
+        interactive: false,
+        icon: L.divIcon({ className: "km-label", html: `<div>${km}</div>`, iconSize: [30, 14], iconAnchor: [15, 7] }),
+      }).addTo(kmLayer);
+    }
+  });
+
+  /* ---------- úseky povolených ponorů (plavební průvodce) ---------- */
+  const DRAFT_RESERVE = 0.2; // doporučená rezerva pod kýlem [m]
+  let myDraft = parseFloat(localStorage.getItem("slapy.draft")) || 0;
+  const sectionLayer = L.layerGroup();
+  function sectionColor(allowed) {
+    if (!myDraft) return "#2fb4ff";
+    if (allowed >= myDraft + DRAFT_RESERVE) return "#38dc94";
+    if (allowed >= myDraft) return "#ffb63d";
+    return "#ff5a6a";
+  }
+  function renderSections() {
+    sectionLayer.clearLayers();
+    if (typeof SECTIONS === "undefined") return;
+    SECTIONS.forEach(s => {
+      const line = L.polyline(RiverKM.slice(s.fromKm, s.toKm), {
+        color: sectionColor(s.draft), weight: 6, opacity: 0.65,
+      });
+      line.bindPopup(
+        `<b>${s.name}</b><br>` +
+        `<span class="muted">ř. km ${s.toKm}–${s.fromKm}</span><br>` +
+        `Povolený ponor: <b>${s.draft.toFixed(1).replace(".", ",")} m</b>` +
+        (myDraft ? `<br>Tvoje loď (${myDraft.toFixed(1).replace(".", ",")} m): ` +
+          (s.draft >= myDraft + DRAFT_RESERVE ? `<span style="color:#38dc94"><b>projede</b></span>`
+            : s.draft >= myDraft ? `<span style="color:#ffb63d"><b>na hraně — bez rezervy</b></span>`
+            : `<span style="color:#ff5a6a"><b>neprojede</b></span>`) : "") +
+        (s.note ? `<br><span class="muted">${s.note}</span>` : "")
+      );
+      line.addTo(sectionLayer);
+    });
+  }
+  renderSections();
+  if (localStorage.getItem("slapy.sections") !== "0") sectionLayer.addTo(map);
+  window.addEventListener("slapy:draftchange", () => {
+    myDraft = parseFloat(localStorage.getItem("slapy.draft")) || 0;
+    renderSections();
+  });
   map.on("zoomend", () => {
     const z = map.getZoom();
     if (z >= 13 && !map.hasLayer(kmLayer)) map.addLayer(kmLayer);
@@ -89,6 +130,7 @@
   const POI_ICONS = {
     marina: "⚓", fuel: "⛽", food: "🍽", camp: "🏕", ferry: "⛴",
     rescue: "🚑", dam: "🧱", rental: "🛥", beach: "🏖", sight: "🏰", info: "ℹ️",
+    lock: "🚦",
   };
   const poiLayer = L.layerGroup().addTo(map);
   const poiMarkers = [];
@@ -258,8 +300,21 @@
       kmVal.textContent = pr.offAxis < 1200 ? pr.km.toFixed(1) : "—";
 
       const z = zoneAt(lat, lon);
+      let warn = null;
       if (z && z.kind === "danger") {
-        if (lastZoneWarn !== z.name) { showAlert("⚠️ " + z.name + " — " + z.desc); lastZoneWarn = z.name; }
+        warn = { key: z.name, msg: "⚠️ " + z.name + " — " + z.desc, cls: "" };
+      } else if (myDraft && typeof SECTIONS !== "undefined" && pr.offAxis < 800) {
+        const sec = SECTIONS.find(s => pr.km >= Math.min(s.fromKm, s.toKm) && pr.km <= Math.max(s.fromKm, s.toKm));
+        if (sec && sec.draft < myDraft) {
+          warn = { key: "sec:" + sec.name,
+            msg: `⚠️ ${sec.name}: povolený ponor ${sec.draft.toFixed(1).replace(".", ",")} m < tvůj ponor ${myDraft.toFixed(1).replace(".", ",")} m!`, cls: "" };
+        } else if (sec && sec.draft < myDraft + DRAFT_RESERVE) {
+          warn = { key: "sec:" + sec.name,
+            msg: `⚠️ ${sec.name}: ponor ${sec.draft.toFixed(1).replace(".", ",")} m — pluješ bez rezervy.`, cls: "warn" };
+        }
+      }
+      if (warn) {
+        if (lastZoneWarn !== warn.key) { showAlert(warn.msg, warn.cls); lastZoneWarn = warn.key; }
       } else if (lastZoneWarn) { hideAlert(); lastZoneWarn = ""; }
     }
 
@@ -378,7 +433,8 @@
       <label><input type="checkbox" id="lm-sea" ${seamarkOn ? "checked" : ""}> Plavební znaky</label>
       <label><input type="checkbox" id="lm-poi" ${map.hasLayer(poiLayer) ? "checked" : ""}> Místa</label>
       <label><input type="checkbox" id="lm-zone" ${map.hasLayer(zoneLayer) ? "checked" : ""}> Zóny</label>
-      ${isoLayer ? `<label><input type="checkbox" id="lm-iso" ${map.hasLayer(isoLayer) ? "checked" : ""}> Hloubky (odhad)</label>` : ""}`;
+      ${isoLayer ? `<label><input type="checkbox" id="lm-iso" ${map.hasLayer(isoLayer) ? "checked" : ""}> Hloubky (odhad)</label>` : ""}
+      <label><input type="checkbox" id="lm-sec" ${map.hasLayer(sectionLayer) ? "checked" : ""}> Ponory úseků</label>`;
     document.body.appendChild(layerMenu);
     layerMenu.querySelectorAll("[data-base]").forEach(b => {
       b.classList.toggle("on", b.dataset.base === currentBase);
@@ -404,6 +460,10 @@
     if (lmIso) lmIso.addEventListener("change", e => {
       localStorage.setItem("slapy.iso", e.target.checked ? "1" : "0");
       e.target.checked ? isoLayer.addTo(map) : map.removeLayer(isoLayer);
+    });
+    layerMenu.querySelector("#lm-sec").addEventListener("change", e => {
+      localStorage.setItem("slapy.sections", e.target.checked ? "1" : "0");
+      e.target.checked ? sectionLayer.addTo(map) : map.removeLayer(sectionLayer);
     });
   });
 

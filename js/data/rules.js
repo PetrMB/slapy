@@ -105,6 +105,29 @@ const RULES_HTML = `
 </div>
 
 <div class="card">
+  <h3>🧭 Plavba ze Slap do Prahy a dál</h3>
+  <div class="kv"><span>Slapy: hráz → Vestecký most</span><b>ponor 2,2 m</b></div>
+  <div class="kv"><span>Vestecký most → Kamýk</span><b>ponor 1,7 m</b></div>
+  <div class="kv"><span>Slapy (Třebenice) → PK Štěchovice</span><b style="color:#ff5a6a">ponor 1,2 m ⚠️</b></div>
+  <div class="kv"><span>Štěchovice → soutok s Berounkou</span><b>ponor 1,6 m</b></div>
+  <div class="kv"><span>Berounka → Praha → Mělník</span><b>ponor 1,8 m</b></div>
+  <div class="kv"><span>Labe: Mělník → Chvaletice</span><b>ponor 2,1 m</b></div>
+  <div class="kv"><span>Labe: Mělník → Ústí → hranice</span><b>dle vodního stavu</b></div>
+  <ul style="margin-top:8px">
+    <li><b>Kritické místo:</b> úsek nad Štěchovicemi (1,2 m) — lodě s větším
+      ponorem ze Slap po vodě neprojedou.</li>
+    <li>Přes hráz Slapy: přeprava PVL (max. 3,5 t / 8,5 × 2,6 m,
+      tel. 606 656 432); <b>lodní zdvihadlo je ve výstavbě</b>.</li>
+    <li>Na trase do Prahy a Mělníka je 8 plavebních komor (Štěchovice, Vrané,
+      Modřany, Smíchov, Štvanice, Podbaba, Miřejovice, Hořín) — na mapě jako 🚦.</li>
+    <li>Skutečné aktuální ponory vyhlašuje SPS —
+      <a href="https://lavdis.cz" target="_blank" rel="noopener">LAVDIS: zprávy vůdcům plavidel</a>.</li>
+    <li>V panelu <b>Plavba</b> nastav ponor své lodi — mapa obarví úseky
+      (🟢/🟠/🔴) a ohlídá tě na trase.</li>
+  </ul>
+</div>
+
+<div class="card">
   <h3>🚧 Hráze a zvláštní místa</h3>
   <ul>
     <li><b>Hráz VD Slapy</b> (km 91,6–91,8): zákaz plavby, prostor vymezen bójemi.
