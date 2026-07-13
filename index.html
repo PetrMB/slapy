@@ -43,9 +43,11 @@
 
 <!-- ===================== MAPA ===================== -->
 <main id="map" role="application" aria-label="Plavební mapa Slapy"></main>
+<div id="map3d" aria-label="3D pohled na nádrž" style="display:none"></div>
 
 <!-- plovoucí tlačítka na mapě -->
 <div id="map-fabs">
+  <button id="fab-3d" title="3D pohled" aria-label="Přepnout 3D pohled na terén">3D</button>
   <button id="fab-locate" title="Moje poloha" aria-label="Vycentrovat na moji polohu">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
   </button>
@@ -93,7 +95,10 @@
 <script src="js/data/zones.js"></script>
 <script src="js/data/pois.js"></script>
 <script src="js/data/rules.js"></script>
+<script src="js/data/isobaths.js"></script>
 <script src="js/riverkm.js"></script>
+<script src="js/depth.js"></script>
+<script src="js/map3d.js"></script>
 <script src="js/gps.js"></script>
 <script src="js/weather.js"></script>
 <script src="js/panels.js"></script>

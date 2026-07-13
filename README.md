@@ -29,9 +29,29 @@ přehled a pomůcky pro vůdce malého plavidla.
 - 📴 **Offline** — PWA se service workerem, mapové dlaždice navštívené oblasti
   se ukládají do cache
 
+## 3D pohled
+
+Tlačítko **3D** na mapě přepne do trojrozměrného pohledu (MapLibre GL JS):
+ortofoto ČÚZK drapované přes výškový model terénu, obloha, naklápění a rotace
+gesty. Terén: dlaždice **ČÚZK DMR 5G** (CC BY 4.0) vygenerované do `terrain/`
+CI workflow *bake-terrain*; dokud nejsou vygenerované, použije se automaticky
+globální DEM [AWS Terrain Tiles](https://registry.opendata.aws/terrain-tiles/)
+(Terrarium, Mapzen).
+
+## Hloubkové vrstevnice (odhad)
+
+Workflow *bake-terrain* (`tools/bake_terrain.py`, ruční spuštění v Actions)
+vygeneruje **orientační izobaty 2–50 m** a hloubkovou mřížku (`data/depth.png`)
+z modelu: hloubka thalwegu kalibrovaná známými body (58 m u hráze) + příčný
+profil podle vzdálenosti od břehu odvozené z DMR 5G. **Skutečná batymetrie
+(sonar Povodí Vltavy 2010) není veřejná — jde o odhad, který nenahrazuje
+měření.** V aplikaci: vrstva „Hloubky (odhad)" v menu vrstev + řádek
+„Hloubka pod lodí" v panelu Plavba.
+
 ## Technika
 
-Čistý HTML/CSS/JS bez buildu, [Leaflet 1.9](https://leafletjs.com) (vendorováno).
+Čistý HTML/CSS/JS bez buildu, [Leaflet 1.9](https://leafletjs.com) a
+[MapLibre GL JS](https://maplibre.org) (vendorováno).
 Stačí statický server:
 
 ```bash

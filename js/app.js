@@ -71,6 +71,20 @@
     shape.addTo(zoneLayer);
   });
 
+  /* ---------- hloubkové vrstevnice (odhad, generuje CI bake) ---------- */
+  let isoLayer = null;
+  if (typeof ISOBATHS !== "undefined" && ISOBATHS) {
+    isoLayer = L.geoJSON(ISOBATHS, {
+      style: f => ({
+        color: "#7fd4ff",
+        weight: 0.8 + (f.properties.depth || 5) / 30,
+        opacity: 0.7,
+        interactive: false,
+      }),
+    });
+    if (localStorage.getItem("slapy.iso") !== "0") isoLayer.addTo(map);
+  }
+
   /* ---------- POI ---------- */
   const POI_ICONS = {
     marina: "⚓", fuel: "⛽", food: "🍽", camp: "🏕", ferry: "⛴",
@@ -288,6 +302,10 @@
       accCircle.setLatLng([lat, lon]).setRadius(accuracy);
     }
     if (followMe) map.panTo([lat, lon], { animate: true, duration: 0.4 });
+    if (is3d) {
+      Map3D.updateBoat(lat, lon, s.course);
+      if (followMe) Map3D.follow(lat, lon);
+    }
     if (courseUp && s.course != null) {
       map.getContainer().style.setProperty("--rot", `${-s.course}deg`);
     }
@@ -316,6 +334,37 @@
     $("fab-north").textContent = courseUp ? "K↑" : "N↑";
   });
 
+  /* ---------- 3D pohled ---------- */
+  const map3dEl = $("map3d");
+  let is3d = false;
+  $("fab-3d").addEventListener("click", async () => {
+    const btn = $("fab-3d");
+    if (!is3d) {
+      const c = map.getCenter();
+      btn.textContent = "…";
+      try {
+        await Map3D.show(map3dEl, { lat: c.lat, lng: c.lng, zoom: map.getZoom() - 1 });
+      } catch (e) {
+        btn.classList.add("unavailable");
+        showAlert("3D pohled se nepodařilo načíst (vyžaduje WebGL a připojení).", "warn", 6000);
+        btn.textContent = "3D";
+        return;
+      }
+      is3d = true;
+      btn.textContent = "2D";
+      btn.classList.add("on");
+      const fix = GPS.state.fix;
+      if (fix) Map3D.updateBoat(fix.coords.latitude, fix.coords.longitude, GPS.state.course);
+    } else {
+      const v = Map3D.view();
+      Map3D.hide(map3dEl);
+      is3d = false;
+      btn.textContent = "3D";
+      btn.classList.remove("on");
+      if (v) map.setView([v.lat, v.lng], Math.round(v.zoom) + 1);
+    }
+  });
+
   /* ---------- přepínač vrstev ---------- */
   let layerMenu = null;
   $("fab-layers").addEventListener("click", () => {
@@ -328,7 +377,8 @@
       <button data-base="osm">OpenStreetMap</button>
       <label><input type="checkbox" id="lm-sea" ${seamarkOn ? "checked" : ""}> Plavební znaky</label>
       <label><input type="checkbox" id="lm-poi" ${map.hasLayer(poiLayer) ? "checked" : ""}> Místa</label>
-      <label><input type="checkbox" id="lm-zone" ${map.hasLayer(zoneLayer) ? "checked" : ""}> Zóny</label>`;
+      <label><input type="checkbox" id="lm-zone" ${map.hasLayer(zoneLayer) ? "checked" : ""}> Zóny</label>
+      ${isoLayer ? `<label><input type="checkbox" id="lm-iso" ${map.hasLayer(isoLayer) ? "checked" : ""}> Hloubky (odhad)</label>` : ""}`;
     document.body.appendChild(layerMenu);
     layerMenu.querySelectorAll("[data-base]").forEach(b => {
       b.classList.toggle("on", b.dataset.base === currentBase);
@@ -350,6 +400,11 @@
       e.target.checked ? poiLayer.addTo(map) : map.removeLayer(poiLayer));
     layerMenu.querySelector("#lm-zone").addEventListener("change", e =>
       e.target.checked ? zoneLayer.addTo(map) : map.removeLayer(zoneLayer));
+    const lmIso = layerMenu.querySelector("#lm-iso");
+    if (lmIso) lmIso.addEventListener("change", e => {
+      localStorage.setItem("slapy.iso", e.target.checked ? "1" : "0");
+      e.target.checked ? isoLayer.addTo(map) : map.removeLayer(isoLayer);
+    });
   });
 
   /* ---------- taby a panel ---------- */

@@ -1,14 +1,15 @@
 /* Service worker: offline shell + cache mapových dlaždic (LRU-ish) */
-const SHELL = "slapy-shell-v3";
+const SHELL = "slapy-shell-v4";
 const TILES = "slapy-tiles-v1";
 const SHELL_FILES = [
   "./", "index.html", "css/app.css",
-  "js/app.js", "js/gps.js", "js/panels.js", "js/riverkm.js", "js/weather.js",
-  "js/data/pois.js", "js/data/river.js", "js/data/zones.js", "js/data/rules.js",
+  "js/app.js", "js/gps.js", "js/panels.js", "js/riverkm.js", "js/weather.js", "js/map3d.js", "js/depth.js",
+  "js/data/pois.js", "js/data/river.js", "js/data/zones.js", "js/data/rules.js", "js/data/isobaths.js",
   "vendor/leaflet/leaflet.js", "vendor/leaflet/leaflet.css",
+  "vendor/maplibre/maplibre-gl.js", "vendor/maplibre/maplibre-gl.css",
   "manifest.webmanifest", "icons/icon.svg",
 ];
-const TILE_HOSTS = ["ags.cuzk.gov.cz", "tile.openstreetmap.org", "tiles.openseamap.org"];
+const TILE_HOSTS = ["ags.cuzk.gov.cz", "tile.openstreetmap.org", "tiles.openseamap.org", "s3.amazonaws.com"];
 const TILE_LIMIT = 1200;
 
 self.addEventListener("install", e => {
@@ -35,7 +36,9 @@ self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
 
   // dlaždice: cache-first (offline plavba po již navštívené oblasti)
-  if (TILE_HOSTS.includes(url.hostname)) {
+  // — externí tile servery i lokální terénní dlaždice (terrain/)
+  if (TILE_HOSTS.includes(url.hostname) ||
+      (url.origin === location.origin && url.pathname.includes("/terrain/"))) {
     e.respondWith(
       caches.open(TILES).then(async c => {
         const hit = await c.match(e.request);

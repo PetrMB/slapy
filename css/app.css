@@ -183,6 +183,42 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ============ MAP ============ */
 #map { flex: 1; background: #0a1a28; z-index: 1; }
+#map3d {
+  position: absolute;
+  top: calc(var(--statusbar-h) + var(--sat));
+  bottom: calc(var(--tabbar-h) + var(--sab));
+  left: 0; right: 0;
+  background: #0a1a28;
+  z-index: 2;
+}
+#map3d .maplibregl-ctrl-group {
+  background: var(--glass);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-1);
+}
+#map3d .maplibregl-ctrl-group button { background: none; }
+#map3d .maplibregl-ctrl-group button + button { border-top-color: var(--line); }
+#map3d .maplibregl-ctrl button .maplibregl-ctrl-icon { filter: invert(0.9); }
+#map3d .maplibregl-ctrl-attrib {
+  background: rgba(7, 19, 32, 0.72) !important;
+  color: var(--faint);
+  font-size: 9px;
+  border-radius: 8px 0 0 0;
+}
+#map3d .maplibregl-ctrl-attrib a { color: var(--accent); }
+#map3d .maplibregl-popup-content {
+  background: var(--surface-solid); color: var(--text);
+  border-radius: var(--r-md); border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-2);
+  font-size: 13.5px; line-height: 1.5; padding: 12px 26px 12px 14px;
+}
+#map3d .maplibregl-popup-tip { border-top-color: var(--surface-solid) !important; }
+#map3d .maplibregl-popup-close-button { color: var(--muted); font-size: 16px; }
+.boat-marker3d { filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.6)); }
+#fab-3d.on { color: #04211a !important; background: var(--accent-grad) !important; border-color: transparent !important; box-shadow: 0 6px 18px var(--accent-soft); }
+#fab-3d.unavailable { display: none; }
 .leaflet-container { font: inherit; background: #0a1a28; }
 .leaflet-control-attribution {
   background: rgba(7, 19, 32, 0.72) !important;

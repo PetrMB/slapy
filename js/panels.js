@@ -69,6 +69,7 @@ const Panels = (() => {
       <h2>📍 Plavba</h2>
       <div class="card">
         <div class="kv"><span>Poloha</span><b id="trip-pos">${pos}</b></div>
+        ${Depth.available() ? `<div class="kv"><span>Hloubka pod lodí <small class="muted">(odhad)</small></span><b id="trip-depth">—</b></div>` : ""}
         <div class="kv"><span>Přesnost GPS</span><b>${s.fix ? Math.round(s.fix.coords.accuracy) + " m" : "—"}</b></div>
         <div class="kv"><span>Ujeto (záznam)</span><b>${(s.trackDist / 1000).toFixed(2)} km</b></div>
         <div class="kv"><span>Čas plavby</span><b>${durStr}</b></div>
@@ -93,6 +94,19 @@ const Panels = (() => {
         <div class="kv"><span>VZS Slapy (Stará Živohošť)</span><b><a href="tel:+420607962552">607 962 552</a></b></div>
         <p class="muted" style="margin-top:6px">Tlačítko MOB na mapě označí místo pádu osoby do vody a povede vás zpět.</p>
       </div>`;
+
+    /* hloubka: mřížka se načítá asynchronně — doplnit po načtení */
+    if (Depth.available() && s.fix) {
+      const p = Depth.load();
+      if (p) p.then(() => {
+        const dep = el.querySelector("#trip-depth");
+        const fix = GPS.state.fix;
+        if (dep && fix) {
+          const d = Depth.at(fix.coords.latitude, fix.coords.longitude);
+          dep.textContent = d != null ? `≈ ${d} m` : "—";
+        }
+      });
+    }
 
     el.querySelector("#trip-rec").addEventListener("click", () => {
       if (s.trackOn) GPS.stopTrack();
@@ -240,6 +254,11 @@ const Panels = (() => {
         const pos = container.querySelector("#trip-pos");
         if (pos && s.fix) pos.textContent =
           `${s.fix.coords.latitude.toFixed(5)}° N, ${s.fix.coords.longitude.toFixed(5)}° E`;
+        const dep = container.querySelector("#trip-depth");
+        if (dep && s.fix) {
+          const d = Depth.at(s.fix.coords.latitude, s.fix.coords.longitude);
+          dep.textContent = d != null ? `≈ ${d} m` : "—";
+        }
         const dr = container.querySelector("#anchor-drift");
         if (dr) dr.textContent = Math.round(GPS.anchorDrift() ?? 0) + " m";
       }
