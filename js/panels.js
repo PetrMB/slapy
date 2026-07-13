@@ -95,9 +95,9 @@ const Panels = (() => {
         <p class="muted">Podle ponoru se barví úseky vodní cesty na mapě
           (🟢 projede · 🟠 bez rezervy · 🔴 neprojede) a hlásí se varování na trase.</p>
         <div style="display:flex;gap:10px;align-items:center;margin-top:10px">
-          <input type="number" id="draft-input" class="num-input" inputmode="decimal"
-            min="0" max="3" step="0.1" placeholder="1,6"
-            value="${localStorage.getItem("slapy.draft") || ""}">
+          <input type="text" id="draft-input" class="num-input" inputmode="decimal"
+            maxlength="4" placeholder="1,6" autocomplete="off"
+            value="${(localStorage.getItem("slapy.draft") || "").replace(".", ",")}">
           <span style="font-weight:700">m</span>
           <span class="muted" style="font-size:12.5px">(prázdné = bez hodnocení)</span>
         </div>
@@ -122,10 +122,20 @@ const Panels = (() => {
       });
     }
 
-    el.querySelector("#draft-input").addEventListener("change", e => {
-      const v = parseFloat(String(e.target.value).replace(",", "."));
-      if (v > 0 && v <= 3) localStorage.setItem("slapy.draft", String(v));
-      else localStorage.removeItem("slapy.draft");
+    const draftInput = el.querySelector("#draft-input");
+    draftInput.addEventListener("input", e => {
+      // povolit jen číslice a jednu čárku/tečku
+      e.target.value = e.target.value.replace(/[^\d.,]/g, "").replace(/([.,].*)[.,]/g, "$1");
+    });
+    draftInput.addEventListener("change", e => {
+      const v = parseFloat(String(e.target.value).trim().replace(",", "."));
+      if (v > 0 && v <= 3) {
+        localStorage.setItem("slapy.draft", String(v));
+        e.target.value = String(v).replace(".", ",");
+      } else {
+        localStorage.removeItem("slapy.draft");
+        e.target.value = "";
+      }
       window.dispatchEvent(new Event("slapy:draftchange"));
     });
 
