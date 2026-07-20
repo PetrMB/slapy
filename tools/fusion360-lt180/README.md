@@ -54,6 +54,26 @@ počty neuvádí, jde o návrh): plná žebra na stanicích 0, 55, 110 (pevný k
 a 800, 850, 900 mm (pevný konec); krátká žebra v zóně klapky (110–410 mm)
 a křidélka (425–800 mm).
 
+## Hotové DXF pro laser (bez Fusionu)
+
+Složka `dxf/` obsahuje předgenerované soubory (DXF R12, jednotky mm):
+
+- `dxf/dily/` — každý typ dílu samostatně, obrys v počátku (vrstva `CUT`),
+- `dxf/narez/` — nářezové plány se všemi kusy dle kusovníku:
+  - balza 3 mm, archy 1000×100 mm — 6 archů (60 žeber),
+  - překližka 3 mm, arch 600×300 mm — 1 arch (F2–F9),
+  - překližka 5 mm, arch 300×200 mm — 1 arch (F1).
+
+V nářezových plánech je navíc vrstva `POPIS` (červená) s názvem dílu pro
+gravírování — pokud ji nechcete, v laseru ji vypněte.
+
+Regenerace (např. po úpravě konfigurace v `LT180_parts/LT180_parts.py`
+nebo rozměrů archů v `generate_dxf.py`):
+
+```bash
+python3 generate_dxf.py
+```
+
 ## Co skript záměrně negeneruje
 
 Dle zadání jsou vynechány:
