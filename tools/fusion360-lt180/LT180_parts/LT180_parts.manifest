@@ -1,0 +1,10 @@
+{
+    "autodeskProduct": "Fusion360",
+    "type": "script",
+    "author": "LT-180",
+    "description": {
+        "": "Generuje konstrukcni dily RC modelu LT-180 (prepazky trupu F1-F9 a zebra kridla Clark Y) pripravene pro export DXF a laserove rezani."
+    },
+    "supportedOS": "windows|mac",
+    "editEnabled": true
+}
